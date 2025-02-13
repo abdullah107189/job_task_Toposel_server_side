@@ -48,6 +48,7 @@ async function run() {
       res.send({ result, token });
     });
 
+    // login user
     app.get("/login-user", async (req, res) => {
       const loginInfo = req.query;
       const userEmail = { email: loginInfo?.email };
@@ -64,6 +65,42 @@ async function run() {
         }
       } else {
         return res.send({ status: false, message: "Email not found" });
+      }
+    });
+
+    // search implement
+
+    app.get("/searchUser", async (req, res) => {
+      try {
+        const { query } = req.query;
+        let users;
+
+        if (!query) {
+          return res
+            .status(400)
+            .json({ message: "Query parameter is required!" });
+        }
+
+        users = await userInfoCollection
+          .find(
+            {
+              $or: [
+                { username: { $regex: query, $options: "i" } }, // ✅ Case-insensitive regex search
+                { email: { $regex: query, $options: "i" } },
+              ],
+            },
+            { projection: { password: 0 } }
+          )
+          .toArray();
+
+        if (users.length === 0) {
+          return res.status(404).json({ message: "User not found!" });
+        }
+
+        res.json(users);
+      } catch (error) {
+        console.error("Search Error:", error);
+        res.status(500).json({ message: "Internal server error!" });
       }
     });
 
