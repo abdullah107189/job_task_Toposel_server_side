@@ -40,10 +40,21 @@ async function run() {
       res.send(result);
     });
 
-    app.get('/login-user', async(req, res) =>{
-        const email = req.body;
-        console.log(email);
-    })
+    app.get("/login-user", async (req, res) => {
+      const loginInfo = req.query;
+      const userEmail = { email: loginInfo?.email };
+      const userPass = { password: loginInfo?.pass };
+      const isMatchEmail = await userInfoCollection.findOne(userEmail);
+      if (isMatchEmail) {
+        if (isMatchEmail.password === userPass?.password) {
+          return res.send({ status: true });
+        } else {
+          return res.send({ status: false, message: "Incorrect password" });
+        }
+      } else {
+        return res.send({ status: false, message: "Email not found" });
+      }
+    });
 
     await client.db("admin").command({ ping: 1 });
     console.log(
