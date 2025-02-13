@@ -37,9 +37,15 @@ async function run() {
     // user info add in the db
     app.post("/add-user", async (req, res) => {
       const userInfo = req.body;
+      const existingUser = await userInfoCollection.findOne({
+        email: userInfo.email,
+      });
+      if (existingUser) {
+        return res.status(409).send({ message: "User Email already exists." });
+      }
       const result = await userInfoCollection.insertOne(userInfo);
       const token = jwt.sign(
-        { email: userInfo?.email },
+        { email: userInfo.email },
         process.env.ACCESS_TOKEN,
         {
           expiresIn: "1h",
@@ -76,9 +82,9 @@ async function run() {
         let users;
 
         if (!query) {
-          return res
-            .status(400)
-            .json({ message: "Query parameter is required!" });
+          users = await userInfoCollection.find().toArray();
+          return res.send(users);
+        } else {
         }
 
         users = await userInfoCollection
@@ -94,13 +100,13 @@ async function run() {
           .toArray();
 
         if (users.length === 0) {
-          return res.status(404).json({ message: "User not found!" });
+          return res.send([]);
         }
 
-        res.json(users);
+        res.send(users);
       } catch (error) {
         console.error("Search Error:", error);
-        res.status(500).json({ message: "Internal server error!" });
+        res.status(500).send({ message: "Internal server error!" });
       }
     });
 
