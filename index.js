@@ -3,6 +3,7 @@ const express = require("express");
 const app = express();
 const port = process.env.PORT || 4545;
 const cors = require("cors");
+const jwt = require("jsonwebtoken");
 
 // middleware
 app.use(cors());
@@ -47,7 +48,10 @@ async function run() {
       const isMatchEmail = await userInfoCollection.findOne(userEmail);
       if (isMatchEmail) {
         if (isMatchEmail.password === userPass?.password) {
-          return res.send({ status: true });
+          const token = jwt.sign(userEmail, process.env.ACCESS_TOKEN, {
+            expiresIn: "1h",
+          });
+          return res.send({ status: true, token });
         } else {
           return res.send({ status: false, message: "Incorrect password" });
         }
