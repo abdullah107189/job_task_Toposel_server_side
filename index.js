@@ -38,7 +38,14 @@ async function run() {
     app.post("/add-user", async (req, res) => {
       const userInfo = req.body;
       const result = await userInfoCollection.insertOne(userInfo);
-      res.send(result);
+      const token = jwt.sign(
+        { email: userInfo?.email },
+        process.env.ACCESS_TOKEN,
+        {
+          expiresIn: "1h",
+        }
+      );
+      res.send({ result, token });
     });
 
     app.get("/login-user", async (req, res) => {
